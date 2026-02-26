@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(
@@ -38,6 +38,10 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     status: "running",
   });
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 app.use("/api/auth", authRoutes);
