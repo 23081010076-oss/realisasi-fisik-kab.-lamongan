@@ -1,14 +1,8 @@
 // This is your Prisma schema file
 
 generator client {
-  provider = "prisma-client-js"
-}
-
-generator erd {
-  provider    = "prisma-erd-generator"
-  output      = "./ERD.svg"
-  theme       = "default"
-  mmdcPath    = "D:/BErflamongan/node_modules/.bin"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {

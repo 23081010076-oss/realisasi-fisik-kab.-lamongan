@@ -47,7 +47,9 @@ export const generatePaketPDF = async (paket, progressImages = []) => {
   if (uniqueProgress.length >= 3) {
     progressStages.push(uniqueProgress[0]); // First (e.g., 0%)
     // Find 50% or closest to middle
-    const midProgress = uniqueProgress.find(p => p === 50) || uniqueProgress[Math.floor(uniqueProgress.length / 2)];
+    const midProgress =
+      uniqueProgress.find((p) => p === 50) ||
+      uniqueProgress[Math.floor(uniqueProgress.length / 2)];
     progressStages.push(midProgress); // Middle (50%)
     progressStages.push(uniqueProgress[uniqueProgress.length - 1]); // Last (100%)
   } else if (uniqueProgress.length === 2) {
@@ -86,22 +88,22 @@ export const generatePaketPDF = async (paket, progressImages = []) => {
   let yPosition = 30;
 
   // ── Layout constants ──────────────────────────────────────────────────────
-  const contentWidth  = pageWidth - margin * 2;
-  const photoColWidth = contentWidth * 0.57;         // left panel ≈57%
+  const contentWidth = pageWidth - margin * 2;
+  const photoColWidth = contentWidth * 0.57; // left panel ≈57%
   const tableColWidth = contentWidth - photoColWidth - 4; // right panel, 4mm gap
-  const tableX        = margin + photoColWidth + 4;
+  const tableX = margin + photoColWidth + 4;
 
-  const NUM_STAGES    = 3;
-  const GAP           = 2;                           // mm between sections
-  const BUTTON_H      = 8;                           // mm for label bar
+  const NUM_STAGES = 3;
+  const GAP = 2; // mm between sections
+  const BUTTON_H = 8; // mm for label bar
 
   // Total available height for both panels (leave footer space)
   const totalH = pageHeight - yPosition - margin - 6;
 
   // Each section height = equal slice of total
-  const sectionH  = (totalH - (NUM_STAGES - 1) * GAP) / NUM_STAGES;
-  const photoH    = sectionH - BUTTON_H - 1;        // photo area inside section
-  const photoW    = photoColWidth / 2 - 2;           // each of 2 side-by-side
+  const sectionH = (totalH - (NUM_STAGES - 1) * GAP) / NUM_STAGES;
+  const photoH = sectionH - BUTTON_H - 1; // photo area inside section
+  const photoW = photoColWidth / 2 - 2; // each of 2 side-by-side
 
   // ── Outer green borders ───────────────────────────────────────────────────
   doc.setDrawColor(0, 180, 0);
@@ -113,8 +115,8 @@ export const generatePaketPDF = async (paket, progressImages = []) => {
 
   // ── Draw 3 progress stage sections ───────────────────────────────────────
   for (let si = 0; si < NUM_STAGES; si++) {
-    const stage   = stageImages[si] || { progress: si * 50, images: [] };
-    const secTop  = yPosition + si * (sectionH + GAP);
+    const stage = stageImages[si] || { progress: si * 50, images: [] };
+    const secTop = yPosition + si * (sectionH + GAP);
 
     // Blue border around this section (entire section)
     doc.setDrawColor(0, 0, 139);
@@ -136,12 +138,23 @@ export const generatePaketPDF = async (paket, progressImages = []) => {
 
       if (stage.images && stage.images[col]) {
         try {
-          doc.addImage(stage.images[col], "JPEG", px + 1, py + 1, photoW - 2, photoH - 2);
+          doc.addImage(
+            stage.images[col],
+            "JPEG",
+            px + 1,
+            py + 1,
+            photoW - 2,
+            photoH - 2,
+          );
         } catch {
-          doc.text("FOTO TIDAK TERSEDIA", px + photoW / 2, py + photoH / 2, { align: "center" });
+          doc.text("FOTO TIDAK TERSEDIA", px + photoW / 2, py + photoH / 2, {
+            align: "center",
+          });
         }
       } else {
-        doc.text("FOTO TIDAK TERSEDIA", px + photoW / 2, py + photoH / 2, { align: "center" });
+        doc.text("FOTO TIDAK TERSEDIA", px + photoW / 2, py + photoH / 2, {
+          align: "center",
+        });
       }
     }
 
@@ -163,19 +176,44 @@ export const generatePaketPDF = async (paket, progressImages = []) => {
   // ── Right info table – stretch rows to fill totalH ────────────────────────
   doc.setTextColor(0);
   const tableData = [
-    ["OPD",                 paket.opd?.name || "-"],
-    ["KEGIATAN",            paket.kegiatan || "-"],
-    ["LOKASI",              paket.lokasi || "-"],
-    ["Nomor Kontrak",       paket.nomorKontrak || "-"],
-    ["Tanggal",             paket.tanggalMulai ? new Date(paket.tanggalMulai).toLocaleDateString("id-ID") : "-"],
-    ["Nilai Kontrak",       new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2 }).format(paket.nilai || 0)],
-    ["No SPMK",             paket.noSPMK || "-"],
-    ["Tgl Mulai Pekerjaan", paket.tanggalMulai ? new Date(paket.tanggalMulai).toLocaleDateString("id-ID") : "-"],
-    ["Tanggal Akhir",       paket.tanggalSelesai ? new Date(paket.tanggalSelesai).toLocaleDateString("id-ID") : "-"],
-    ["Dana Pagu",           new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2 }).format(paket.pagu || paket.nilai || 0)],
-    ["Sumber Dana",         paket.sumberDana || "APBD"],
-    ["Pelaksana",           paket.pelaksana || "-"],
-    ["Kode Rekening",       paket.kodeRekening || paket.code || "-"],
+    ["OPD", paket.opd?.name || "-"],
+    ["KEGIATAN", paket.kegiatan || "-"],
+    ["LOKASI", paket.lokasi || "-"],
+    ["Nomor Kontrak", paket.nomorKontrak || "-"],
+    [
+      "Tanggal",
+      paket.tanggalMulai
+        ? new Date(paket.tanggalMulai).toLocaleDateString("id-ID")
+        : "-",
+    ],
+    [
+      "Nilai Kontrak",
+      new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2 }).format(
+        paket.nilai || 0,
+      ),
+    ],
+    ["No SPMK", paket.noSPMK || "-"],
+    [
+      "Tgl Mulai Pekerjaan",
+      paket.tanggalMulai
+        ? new Date(paket.tanggalMulai).toLocaleDateString("id-ID")
+        : "-",
+    ],
+    [
+      "Tanggal Akhir",
+      paket.tanggalSelesai
+        ? new Date(paket.tanggalSelesai).toLocaleDateString("id-ID")
+        : "-",
+    ],
+    [
+      "Dana Pagu",
+      new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2 }).format(
+        paket.pagu || paket.nilai || 0,
+      ),
+    ],
+    ["Sumber Dana", paket.sumberDana || "APBD"],
+    ["Pelaksana", paket.pelaksana || "-"],
+    ["Kode Rekening", paket.kodeRekening || paket.code || "-"],
   ];
 
   const rowH = totalH / tableData.length;
