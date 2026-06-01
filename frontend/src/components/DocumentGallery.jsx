@@ -34,7 +34,7 @@ export default function DocumentGallery({
     setUploading(true);
     try {
       const formData = new FormData();
-      files.forEach((f) => formData.append("files", f));
+      files.forEach((f) => formData.append("files[]", f));
       formData.append("progressPercentage", selectedStage);
       formData.append("category", `progress-${selectedStage}`);
       await onUpload(formData);
@@ -273,7 +273,9 @@ export default function DocumentGallery({
           {currentStageDocs.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {currentStageDocs.map((doc) => {
-                const imgSrc = `http://localhost:4000${doc.filepath}`;
+                const imgSrc = doc.filepath?.startsWith("http")
+                  ? doc.filepath
+                  : `${(import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api").replace(/\/api\/?$/, "")}${doc.filepath}`;
                 return (
                   <div
                     key={doc.id}

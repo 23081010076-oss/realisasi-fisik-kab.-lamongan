@@ -4,17 +4,16 @@
   "description": "Sistem ERP Realisasi Pembangunan Fisik Kabupaten Lamongan",
   "private": true,
   "workspaces": [
-    "backend",
     "frontend"
   ],
   "scripts": {
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm run dev",
+    "install:all": "npm install && cd backend-laravel && composer install && cd ../frontend && npm install",
+    "dev": "concurrently \"npm run dev:laravel\" \"npm run dev:frontend\"",
+    "dev:laravel": "cd backend-laravel && php artisan serve",
     "dev:frontend": "cd frontend && npm run dev",
-    "build": "npm run build:backend && npm run build:frontend",
-    "build:backend": "cd backend && npm run build",
-    "build:frontend": "cd frontend && npm run build"
+    "build": "cd frontend && npm run build",
+    "migrate": "cd backend-laravel && php artisan migrate",
+    "seed": "cd backend-laravel && php artisan db:seed"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

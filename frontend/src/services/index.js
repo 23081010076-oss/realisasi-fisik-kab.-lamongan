@@ -40,6 +40,11 @@ export const dashboardService = {
     const { data } = await api.get("/dashboard/recent", { params: { limit } });
     return data;
   },
+
+  getRekap: async (tahun) => {
+    const { data } = await api.get("/dashboard/rekap", { params: { tahun } });
+    return data;
+  },
 };
 
 export const paketService = {
@@ -94,9 +99,12 @@ export const paketService = {
     return response;
   },
 
-  importExcel: async (file) => {
+  importExcel: async (file, { tahun, opdId, sumberDana } = {}) => {
     const formData = new FormData();
     formData.append("file", file);
+    if (tahun) formData.append("tahun", tahun);
+    if (opdId) formData.append("opdId", opdId);
+    if (sumberDana) formData.append("sumberDana", sumberDana);
     const { data } = await api.post("/paket/import", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { paketService, opdService } from "../services";
+import SearchableSelect from "../components/SearchableSelect";
 import { useAuthStore } from "../stores/authStore";
 
 const F = ({ label, required: req, children }) => (
@@ -222,20 +223,15 @@ export default function PaketForm({ isOpen, onClose, paketId, onSuccess }) {
             </F>
 
             <F label="OPD" required>
-              <select
-                className="input"
+              <SearchableSelect
                 value={formData.opdId}
-                onChange={(e) => set("opdId", e.target.value)}
+                onChange={(val) => set("opdId", val)}
+                options={opds}
+                getLabel={(o) => o.name}
+                placeholder="Pilih OPD"
                 disabled={user?.role === "OPD"}
                 required
-              >
-                <option value="">Pilih OPD</option>
-                {opds.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
+              />
             </F>
 
             <F label="Tahun" required>

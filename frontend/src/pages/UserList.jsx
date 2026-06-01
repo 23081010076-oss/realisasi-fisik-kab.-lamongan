@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { userService, opdService } from "../services";
+import SearchableSelect from "../components/SearchableSelect";
 
 export default function UserList() {
   const [users, setUsers] = useState([]);
@@ -13,6 +14,7 @@ export default function UserList() {
     name: "",
     role: "VIEWER",
     opdId: "",
+    isActive: true,
   });
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function UserList() {
         name: "",
         role: "VIEWER",
         opdId: "",
+        isActive: true,
       });
       loadData();
     } catch (error) {
@@ -71,6 +74,7 @@ export default function UserList() {
       name: user.name,
       role: user.role,
       opdId: user.opdId || "",
+      isActive: user.isActive,
     });
     setShowModal(true);
   };
@@ -133,6 +137,7 @@ export default function UserList() {
               name: "",
               role: "VIEWER",
               opdId: "",
+              isActive: true,
             });
             setShowModal(true);
           }}
@@ -291,19 +296,32 @@ export default function UserList() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   OPD
                 </label>
+                <SearchableSelect
+                  value={formData.opdId}
+                  onChange={(val) => setFormData({ ...formData, opdId: val })}
+                  options={opds}
+                  getLabel={(o) => o.name}
+                  placeholder="Pilih OPD"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
                 <select
                   className="input"
-                  value={formData.opdId}
+                  value={formData.isActive ? "true" : "false"}
                   onChange={(e) =>
-                    setFormData({ ...formData, opdId: e.target.value })
+                    setFormData({
+                      ...formData,
+                      isActive: e.target.value === "true",
+                    })
                   }
                 >
-                  <option value="">Pilih OPD</option>
-                  {opds.map((opd) => (
-                    <option key={opd.id} value={opd.id}>
-                      {opd.name}
-                    </option>
-                  ))}
+                  <option value="true">Aktif</option>
+                  <option value="false">Non-aktif</option>
                 </select>
               </div>
 

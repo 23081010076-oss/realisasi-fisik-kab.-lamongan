@@ -1,10 +1,32 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const getApiBaseUrl = () =>
+  (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api").replace(
+    /\/api\/?$/,
+    "",
+  );
+
+const getDocumentUrl = (doc) => {
+  if (!doc?.filepath) return null;
+  if (doc.filepath.startsWith("http")) return doc.filepath;
+  if (doc.id) return `${getApiBaseUrl()}/api/documents/${doc.id}/file`;
+  return `${getApiBaseUrl()}${doc.filepath}`;
+};
+
+const getAuthHeaders = () => {
+  const auth = JSON.parse(localStorage.getItem("auth-storage") || "{}");
+  const token = auth.state?.token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 // Helper function to convert image URL to base64
 const loadImageAsBase64 = async (url) => {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -16,6 +38,14 @@ const loadImageAsBase64 = async (url) => {
     console.error("Failed to load image:", url, error);
     return null;
   }
+};
+
+const getImageFormat = (dataUrl) => {
+  const match = /^data:image\/([^;]+)/i.exec(dataUrl || "");
+  const type = match?.[1]?.toUpperCase();
+  if (type === "JPG") return "JPEG";
+  if (type === "PNG" || type === "WEBP" || type === "JPEG") return type;
+  return "JPEG";
 };
 
 export const generatePaketPDF = async (paket, progressImages = []) => {
@@ -71,9 +101,7 @@ export const generatePaketPDF = async (paket, progressImages = []) => {
         .filter((doc) => doc.progressPercentage === progress)
         .slice(0, 2); // Maximum 2 images per stage
 
-      const imageUrls = stageDocuments.map(
-        (doc) => `http://localhost:4000${doc.filepath}`,
-      );
+      const imageUrls = stageDocuments.map(getDocumentUrl).filter(Boolean);
       const imagesBase64 = await Promise.all(
         imageUrls.map((url) => loadImageAsBase64(url)),
       );
@@ -140,7 +168,7 @@ export const generatePaketPDF = async (paket, progressImages = []) => {
         try {
           doc.addImage(
             stage.images[col],
-            "JPEG",
+            getImageFormat(stage.images[col]),
             px + 1,
             py + 1,
             photoW - 2,
@@ -279,7 +307,8 @@ const getProgressStages = (paket) => {
     const key = doc.progressPercentage?.toString() || "other";
     if (!acc[key]) acc[key] = [];
     // Use full URL for images
-    acc[key].push(`http://localhost:4000${doc.filepath}`);
+    const url = getDocumentUrl(doc);
+    if (url) acc[key].push(url);
     return acc;
   }, {});
 
@@ -426,7 +455,7 @@ export const generateProgressStagePDF = (paket, progressStage, images = []) => {
         try {
           doc.addImage(
             images[row * 2 + col],
-            "JPEG",
+            getImageFormat(images[row * 2 + col]),
             x + 2,
             y + 2,
             photoWidth - 4,

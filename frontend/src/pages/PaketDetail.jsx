@@ -104,6 +104,14 @@ export default function PaketDetail() {
     }).format(value);
   };
 
+  const formatOptionalRupiah = (value) => {
+    return value === null || value === undefined ? "-" : formatRupiah(value);
+  };
+
+  const displayValue = (value) => {
+    return value === null || value === undefined || value === "" ? "-" : value;
+  };
+
   const formatDate = (date) => {
     if (!date) return "-";
     return new Date(date).toLocaleDateString("id-ID");
@@ -131,6 +139,26 @@ export default function PaketDetail() {
   const canEdit =
     user?.role === "ADMIN" ||
     (user?.role === "OPD" && user?.opdId === paket.opdId);
+  const pagu = Number(paket.pagu || 0);
+  const nilaiKontrak = Number(paket.nilai || 0);
+  const nilaiKontrakDisplay = nilaiKontrak > 0 ? nilaiKontrak : null;
+  const nilaiRealisasi = Number(paket.nilaiRealisasi || 0);
+  const sisaAnggaran =
+    paket.sisaAnggaran !== undefined ? Number(paket.sisaAnggaran) : pagu - nilaiKontrak;
+  const sisaAnggaranDisplay =
+    nilaiKontrakDisplay === null ? null : sisaAnggaran;
+  const sisaRealisasi =
+    nilaiKontrakDisplay === null
+      ? null
+      : paket.sisaRealisasi !== undefined
+        ? Number(paket.sisaRealisasi)
+        : nilaiKontrak - nilaiRealisasi;
+  const progresKeuangan =
+    paket.progresKeuangan !== undefined
+      ? Number(paket.progresKeuangan)
+      : nilaiKontrak > 0
+        ? Number(((nilaiRealisasi / nilaiKontrak) * 100).toFixed(1))
+        : 0;
 
   return (
     <div>
@@ -217,11 +245,15 @@ export default function PaketDetail() {
               </div>
               <div className="col-span-2">
                 <dt className="text-sm text-gray-600 mb-1">Kegiatan</dt>
-                <dd className="font-medium text-gray-900">{paket.kegiatan}</dd>
+                <dd className="font-medium text-gray-900 whitespace-pre-line">
+                  {displayValue(paket.kegiatan)}
+                </dd>
               </div>
               <div className="col-span-2">
                 <dt className="text-sm text-gray-600 mb-1">Lokasi</dt>
-                <dd className="font-medium text-gray-900">{paket.lokasi}</dd>
+                <dd className="font-medium text-gray-900 whitespace-pre-line">
+                  {displayValue(paket.lokasi)}
+                </dd>
               </div>
               <div>
                 <dt className="text-sm text-gray-600">Tanggal Mulai</dt>
@@ -242,7 +274,9 @@ export default function PaketDetail() {
               {paket.keterangan && (
                 <div className="col-span-2">
                   <dt className="text-sm text-gray-600">Keterangan</dt>
-                  <dd className="font-medium">{paket.keterangan}</dd>
+                  <dd className="font-medium whitespace-pre-line">
+                    {paket.keterangan}
+                  </dd>
                 </div>
               )}
             </dl>
@@ -298,21 +332,39 @@ export default function PaketDetail() {
             <h3 className="font-bold text-gray-900 mb-4">Nilai Paket</h3>
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-gray-600">Pagu</p>
+                <p className="text-sm text-gray-600">Pagu Anggaran</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {formatRupiah(paket.nilai)}
+                  {formatRupiah(pagu)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Realisasi</p>
-                <p className="text-xl font-bold text-green-600">
-                  {formatRupiah(paket.nilaiRealisasi)}
+                <p className="text-sm text-gray-600">Nilai Kontrak</p>
+                <p className="text-xl font-bold text-blue-600">
+                  {formatOptionalRupiah(nilaiKontrakDisplay)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Sisa</p>
+                <p className="text-sm text-gray-600">Sisa Anggaran</p>
                 <p className="text-xl font-bold text-orange-600">
-                  {formatRupiah(paket.nilai - paket.nilaiRealisasi)}
+                  {formatOptionalRupiah(sisaAnggaranDisplay)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Realisasi Keuangan</p>
+                <p className="text-xl font-bold text-green-600">
+                  {formatRupiah(nilaiRealisasi)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Sisa Realisasi</p>
+                <p className="text-xl font-bold text-red-600">
+                  {formatOptionalRupiah(sisaRealisasi)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Progres Keuangan</p>
+                <p className="text-xl font-bold text-primary-600">
+                  {progresKeuangan.toFixed(1)}%
                 </p>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { paketService, opdService } from "../services";
+import SearchableSelect from "../components/SearchableSelect";
 import { useAuthStore } from "../stores/authStore";
 import PaketForm from "./PaketForm";
 
@@ -24,6 +25,11 @@ export default function PaketList() {
   const [importResult, setImportResult] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState(null);
+  const [importDefaults, setImportDefaults] = useState({
+    tahun: new Date().getFullYear(),
+    opdId: "",
+    sumberDana: "",
+  });
   const fileInputRef = useRef(null);
   const [showFormModal, setShowFormModal] = useState(false);
   const [editPaketId, setEditPaketId] = useState(null);
@@ -127,7 +133,7 @@ export default function PaketList() {
     try {
       setImporting(true);
       setImportResult(null);
-      const result = await paketService.importExcel(importFile);
+      const result = await paketService.importExcel(importFile, importDefaults);
       setImportResult(result);
       setImportFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -149,6 +155,19 @@ export default function PaketList() {
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(value);
+  };
+
+  const getNilaiKontrak = (paket) => {
+    const nilai = Number(paket.nilai || 0);
+    return nilai > 0 ? nilai : null;
+  };
+
+  const formatOptionalRupiah = (value) => {
+    return value === null || value === undefined ? "-" : formatRupiah(value);
+  };
+
+  const displayValue = (value) => {
+    return value === null || value === undefined || value === "" ? "-" : value;
   };
 
   const getStatusBadge = (status) => {
@@ -219,44 +238,100 @@ export default function PaketList() {
       {/* Import Modal */}
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-0 bg-black bg-opacity-50 sm:items-center sm:p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-lg p-5 sm:p-8 w-full sm:max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="mb-4 text-xl font-bold text-gray-900">
-              Import Paket dari Excel
+          <div className="bg-white rounded-t-2xl sm:rounded-lg p-5 sm:p-6 w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="mb-4 text-lg font-bold text-gray-900">
+              Import Data dari Excel
             </h2>
 
-            <div className="p-3 mb-4 text-sm text-blue-800 rounded-md bg-blue-50">
-              <p className="mb-1 font-medium">Kolom wajib dalam template:</p>
-              <p className="text-xs text-blue-700">
-                PAKET PEKERJAAN, OPD, KEGIATAN, KATEGORI, TAHUN, PAGU ANGGARAN,
-                NILAI KONTRAK, LOKASI
-              </p>
-              <p className="mt-1 text-xs text-blue-700">
-                Kategori: KONSTRUKSI | KONSULTANSI | BARANG | JASA_LAINNYA
-              </p>
-              <p className="mt-1 text-xs text-blue-500">
-                Kode paket dibuat otomatis. Gunakan template dari tombol
-                Download.
-              </p>
-            </div>
-
-            <button
-              onClick={handleDownloadTemplate}
-              className="w-full mb-4 text-sm btn btn-secondary"
-            >
-              ⬇ Download Template Excel
-            </button>
-
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-medium text-gray-700">
-                Pilih File Excel (.xlsx)
-              </label>
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                ref={fileInputRef}
-                onChange={(e) => setImportFile(e.target.files[0])}
-                className="text-sm input"
-              />
+            {/* Default values form */}
+            <div className="mb-4 space-y-3">
+              <div>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">
+                  Tahun Anggaran
+                </label>
+                <select
+                  value={importDefaults.tahun}
+                  onChange={(e) =>
+                    setImportDefaults({
+                      ...importDefaults,
+                      tahun: Number(e.target.value),
+                    })
+                  }
+                  className="input"
+                >
+                  {Array.from(
+                    { length: new Date().getFullYear() - 2010 + 1 },
+                    (_, i) => new Date().getFullYear() - i,
+                  ).map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">
+                  OPD / Instansi{" "}
+                  <span className="font-normal text-gray-400">
+                    (default jika kolom OPD di Excel kosong)
+                  </span>
+                </label>
+                <SearchableSelect
+                  value={importDefaults.opdId}
+                  onChange={(val) =>
+                    setImportDefaults({ ...importDefaults, opdId: val })
+                  }
+                  options={opds}
+                  getLabel={(o) => `${o.code} - ${o.name}`}
+                  placeholder="— Dari kolom Excel —"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">
+                  Sumber Dana{" "}
+                  <span className="font-normal text-gray-400">
+                    (default jika tidak ada di Excel)
+                  </span>
+                </label>
+                <select
+                  value={importDefaults.sumberDana}
+                  onChange={(e) =>
+                    setImportDefaults({
+                      ...importDefaults,
+                      sumberDana: e.target.value,
+                    })
+                  }
+                  className="input"
+                >
+                  <option value="">— Dari kolom Excel —</option>
+                  {[
+                    "APBD",
+                    "APBN",
+                    "DAU",
+                    "DAK",
+                    "BLUD",
+                    "BK",
+                    "BANTUAN PROVINSI",
+                    "LAINNYA",
+                  ].map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 text-xs font-semibold text-gray-600">
+                  File Excel (.xlsx / .xls)
+                </label>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  ref={fileInputRef}
+                  onChange={(e) => setImportFile(e.target.files[0])}
+                  className="text-sm input"
+                />
+              </div>
             </div>
 
             {importResult && (
@@ -316,20 +391,16 @@ export default function PaketList() {
             }
           />
           {user?.role !== "OPD" && (
-            <select
-              className="input"
+            <SearchableSelect
               value={filters.opdId}
-              onChange={(e) =>
-                setFilters({ ...filters, opdId: e.target.value, page: 1 })
+              onChange={(val) =>
+                setFilters({ ...filters, opdId: val, page: 1 })
               }
-            >
-              <option value="">Semua OPD</option>
-              {opds.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.code} - {o.name}
-                </option>
-              ))}
-            </select>
+              options={opds}
+              getLabel={(o) => `${o.code} - ${o.name}`}
+              placeholder="Semua OPD"
+              className="min-w-[220px]"
+            />
           )}
           <select
             className="input"
@@ -395,8 +466,9 @@ export default function PaketList() {
               ) : (
                 pakets.map((paket, idx) => {
                   const pagu = paket.pagu || 0;
-                  const nilaiKontrak = paket.nilai || 0;
-                  const sisa = pagu - nilaiKontrak;
+                  const nilaiKontrak = getNilaiKontrak(paket);
+                  const sisa =
+                    nilaiKontrak === null ? null : pagu - nilaiKontrak;
                   const fmtDate = (d) =>
                     d
                       ? new Date(d).toLocaleDateString("id-ID", {
@@ -441,7 +513,7 @@ export default function PaketList() {
                         <div>
                           <span className="text-gray-400">Kontrak:</span>{" "}
                           <span className="font-medium">
-                            {formatRupiah(nilaiKontrak)}
+                            {formatOptionalRupiah(nilaiKontrak)}
                           </span>
                         </div>
                         <div>
@@ -616,10 +688,11 @@ export default function PaketList() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {pakets.map((paket, idx) => {
                     const pagu = paket.pagu || 0;
-                    const nilaiKontrak = paket.nilai || 0;
-                    const sisa = pagu - nilaiKontrak;
+                    const nilaiKontrak = getNilaiKontrak(paket);
+                    const sisa =
+                      nilaiKontrak === null ? null : pagu - nilaiKontrak;
                     const progresKeuangan =
-                      nilaiKontrak > 0
+                      nilaiKontrak !== null
                         ? ((paket.nilaiRealisasi / nilaiKontrak) * 100).toFixed(
                             1,
                           )
@@ -649,10 +722,12 @@ export default function PaketList() {
                           </p>
                         </td>
                         <td className="border border-gray-100">
-                          <p className="font-medium text-gray-900">
-                            {paket.name}
+                          <p className="font-medium text-gray-900 whitespace-pre-line">
+                            {displayValue(paket.name)}
                           </p>
-                          <p className="text-gray-400">{paket.kegiatan}</p>
+                          <p className="text-gray-400 whitespace-pre-line">
+                            {displayValue(paket.kegiatan)}
+                          </p>
                           {paket.kodeRekening && (
                             <p className="text-gray-400">
                               {paket.kodeRekening}
@@ -663,13 +738,15 @@ export default function PaketList() {
                           {formatRupiah(pagu)}
                         </td>
                         <td className="text-right border border-gray-100 whitespace-nowrap">
-                          {formatRupiah(nilaiKontrak)}
+                          {formatOptionalRupiah(nilaiKontrak)}
                         </td>
                         <td className="text-right border border-gray-100 whitespace-nowrap">
-                          {formatRupiah(sisa)}
+                          {formatOptionalRupiah(sisa)}
                         </td>
                         <td className="border border-gray-100">
-                          {paket.pelaksana || "-"}
+                          <span className="whitespace-pre-line">
+                            {displayValue(paket.pelaksana)}
+                          </span>
                         </td>
                         <td className="text-center border border-gray-100 whitespace-nowrap">
                           {fmtDate(paket.tanggalMulai)}
@@ -694,13 +771,17 @@ export default function PaketList() {
                           {progresKeuangan}%
                         </td>
                         <td className="text-center border border-gray-100">
-                          {paket.sumberDana || "-"}
+                          {displayValue(paket.sumberDana)}
                         </td>
                         <td className="border border-gray-100">
-                          {paket.lokasi || "-"}
+                          <span className="whitespace-pre-line">
+                            {displayValue(paket.lokasi)}
+                          </span>
                         </td>
                         <td className="border border-gray-100">
-                          {paket.keterangan || "-"}
+                          <span className="whitespace-pre-line">
+                            {displayValue(paket.keterangan)}
+                          </span>
                         </td>
                         <td className="border border-gray-100 whitespace-nowrap">
                           {user?.role === "ADMIN" || user?.role === "OPD" ? (
@@ -791,12 +872,16 @@ export default function PaketList() {
                             {formatRupiah(totalPagu)}
                           </td>
                           <td className="text-right px-3 py-2.5 border border-blue-200 text-blue-900 whitespace-nowrap font-bold">
-                            {formatRupiah(totalNilai)}
+                            {formatOptionalRupiah(
+                              totalNilai > 0 ? totalNilai : null,
+                            )}
                           </td>
                           <td
                             className={`text-right px-3 py-2.5 border border-blue-200 whitespace-nowrap font-bold ${totalSisa < 0 ? "text-red-600" : "text-emerald-700"}`}
                           >
-                            {formatRupiah(totalSisa)}
+                            {formatOptionalRupiah(
+                              totalNilai > 0 ? totalSisa : null,
+                            )}
                           </td>
                           <td className="px-3 py-2.5 border border-blue-200 text-gray-400 text-center">
                             —

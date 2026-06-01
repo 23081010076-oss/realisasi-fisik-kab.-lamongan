@@ -76,8 +76,8 @@ docker-compose up -d postgres
 ### 3. Configure Environment
 
 ```bash
-# Backend
-cd backend
+# Backend Laravel
+cd backend-laravel
 cp .env.example .env
 # Edit .env dengan database credentials Anda
 
@@ -90,9 +90,9 @@ cp .env.example .env
 ### 4. Database Migration
 
 ```bash
-cd backend
-npx prisma migrate dev
-npx prisma db seed
+cd backend-laravel
+php artisan migrate
+php artisan db:seed
 ```
 
 ### 5. Run Development Server
@@ -102,14 +102,14 @@ npx prisma db seed
 npm run dev
 
 # Atau jalankan terpisah:
-# Terminal 1 - Backend
-npm run dev:backend
+# Terminal 1 - Backend Laravel
+npm run dev:laravel
 
 # Terminal 2 - Frontend
 npm run dev:frontend
 ```
 
-Backend akan berjalan di: `http://localhost:5000`
+Backend akan berjalan di: `http://127.0.0.1:8000`
 Frontend akan berjalan di: `http://localhost:5173`
 
 ## 📊 Fitur Utama
@@ -210,8 +210,8 @@ API endpoint tersedia di: `http://localhost:5000/api`
 
 ```bash
 # Backend tests
-cd backend
-npm test
+cd backend-laravel
+php artisan test
 
 # Frontend tests
 cd frontend

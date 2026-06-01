@@ -400,11 +400,12 @@ crontab -e
 cd /var/www/erp-lamongan
 git pull
 
-# Update backend
-cd backend
-npm install
-npx prisma migrate deploy
-pm2 restart erp-backend
+# Update backend Laravel
+cd backend-laravel
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force
+php artisan optimize:clear
+php artisan optimize
 
 # Update frontend
 cd ../frontend
